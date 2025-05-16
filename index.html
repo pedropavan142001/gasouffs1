@@ -102,5 +102,99 @@
   <script>
     // a função analisarTudo já contém todos os cálculos necessários
   </script>
+
+  <script>
+    function analisarTudo() {
+      const ph = parseFloat(document.getElementById('ph').value);
+      const pco2 = parseFloat(document.getElementById('pco2').value);
+      const hco3 = parseFloat(document.getElementById('hco3').value);
+      const na = parseFloat(document.getElementById('na').value);
+      const cl = parseFloat(document.getElementById('cl').value);
+      const be = parseFloat(document.getElementById('be').value);
+      const naU = parseFloat(document.getElementById('naU').value);
+      const kU = parseFloat(document.getElementById('kU').value);
+      const clU = parseFloat(document.getElementById('clU').value);
+      const naS = parseFloat(document.getElementById('naS').value);
+      const glicose = parseFloat(document.getElementById('glicose').value);
+      const ureia = parseFloat(document.getElementById('ureia').value);
+      const osmM = parseFloat(document.getElementById('osmMedida').value);
+
+      let texto = '';
+      let acidoseMetabolica = false;
+
+      if (ph < 7.35) texto += 'Acidemia\n';
+      else if (ph > 7.45) texto += 'Alcalemia\n';
+      else texto += 'pH normal\n';
+
+      if (ph < 7.35) {
+        if (hco3 < 22 && pco2 > 45) texto += 'Acidose mista\n';
+        else if (hco3 < 22) {
+          texto += 'Acidose metabólica\n';
+          acidoseMetabolica = true;
+        } else if (pco2 > 45) texto += 'Acidose respiratória\n';
+      } else if (ph > 7.45) {
+        if (hco3 > 26 && pco2 < 35) texto += 'Alcalose mista\n';
+        else if (hco3 > 26) texto += 'Alcalose metabólica\n';
+        else if (pco2 < 35) texto += 'Alcalose respiratória\n';
+      } else {
+        texto += 'Possível distúrbio misto compensado\n';
+      }
+
+      if (acidoseMetabolica) {
+        const pco2E = 1.5 * hco3 + 8;
+        texto += `pCO₂ esperado: ${pco2E.toFixed(1)} ± 2 mmHg\n`;
+        if (pco2 < pco2E - 2) texto += '→ Alcalose respiratória associada\n';
+        else if (pco2 > pco2E + 2) texto += '→ Acidose respiratória associada\n';
+        else texto += '→ Compensação respiratória adequada\n';
+      }
+
+      let ag = null;
+      if (acidoseMetabolica && !isNaN(na) && !isNaN(cl) && !isNaN(hco3)) {
+        ag = na - (cl + hco3);
+        texto += `Ânion Gap: ${ag.toFixed(1)} mEq/L\n`;
+        if (ag > 12) texto += '→ AG aumentado\n';
+        else texto += '→ AG normal\n';
+      }
+
+      if (acidoseMetabolica && ag !== null && ag > 12) {
+        const deltaAG = ag - 10;
+        const deltaHCO3 = 24 - hco3;
+        const deltadelta = deltaAG / deltaHCO3;
+        texto += `Delta/Delta: ${deltadelta.toFixed(2)}\n`;
+        if (deltadelta < 1) texto += '→ Acidose metabólica hiperclorêmica associada\n';
+        else if (deltadelta > 2) texto += '→ Alcalose metabólica associada\n';
+        else texto += '→ Distúrbio metabólico puro\n';
+      }
+
+      if (!isNaN(be)) {
+        texto += `Base Excess: ${be.toFixed(1)} mEq/L\n`;
+        if (be < -2) texto += '→ Excesso de ácidos\n';
+        else if (be > 2) texto += '→ Excesso de bases\n';
+        else texto += '→ Dentro dos limites normais\n';
+      }
+
+      if (!isNaN(naU) && !isNaN(kU) && !isNaN(clU)) {
+        const agu = naU + kU - clU;
+        texto += `\nAG urinário: ${agu.toFixed(1)} mEq/L\n`;
+        if (agu < 0) texto += '→ Origem extrarrenal (ex: diarreia)\n';
+        else texto += '→ Origem renal (ex: ATR)\n';
+      }
+
+      if (!isNaN(naS) && !isNaN(glicose) && !isNaN(ureia)) {
+        const osmCalc = (2 * naS) + (glicose / 18) + (ureia / 6);
+        texto += `\nOsmolaridade calculada: ${osmCalc.toFixed(1)} mOsm/kg\n`;
+        if (!isNaN(osmM)) {
+          const gap = osmM - osmCalc;
+          texto += `Gap osmolar: ${gap.toFixed(1)} mOsm/kg\n`;
+          if (gap > 10) texto += '→ Gap osmolar aumentado (suspeitar de toxinas como etilenoglicol, metanol)\n';
+          else texto += '→ Gap osmolar normal\n';
+        }
+      }
+
+      document.getElementById('resultado').textContent = texto;
+    }
+  </script>
+
 </body>
 </html>
+
